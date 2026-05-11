@@ -1,0 +1,33 @@
+@'
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Outputs
+outputs/*
+!outputs/.gitkeep
+
+# Generated Excel/CSV outputs
+*.xlsx
+*.xls
+*.csv
+
+# Large LUTO report/data folders
+DATA_REPORT/
+Report_Data/
+map_layers/
+*.zip
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+'@ | Set-Content .gitignore
