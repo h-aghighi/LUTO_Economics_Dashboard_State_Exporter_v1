@@ -1,34 +1,44 @@
-# LUTO Economics Dashboard State Exporter v1
+# LUTO Economics Dashboard State Exporter
 
 ## Purpose
 
 This tool extracts the **LUTO dashboard economics overview data** and exports final dashboard-style Excel workbooks.
 
-The output is organised as:
+The production script is:
 
-- Each state is saved as a separate folder.
-- Each state folder contains one Excel workbook.
-- Each region is saved as a separate sheet inside the state workbook.
-- Only final Excel output files are saved.
-- Diagnostic and intermediate files are not saved.
+```text
+luto_economics_dashboard_state_exporter.py
+```
+
+The exporter reads:
+
+```text
+DATA_REPORT\data\Economics_overview_sum.js
+```
+
+It saves only the final Excel outputs. It does not save diagnostic or intermediate extraction files.
 
 ---
 
-## Repository contents
+## Final repository contents
 
 ```text
 LUTO_Economics_Dashboard_State_Exporter_v1
 │
 ├── install_requirements_helper.py
 ├── 00_Install_Requirements.bat
-├── luto_economics_dashboard_state_exporter_v1.py
+├── luto_economics_dashboard_state_exporter.py
 ├── 01_Run_All_States.bat
 ├── 02_Run_Queensland_Only.bat
+├── 03_Run_All_Runs_All_States.bat
+├── 04_Run_All_Runs_Queensland_Only.bat
 ├── README.md
 ├── README_User_Guide.txt
 └── outputs
     └── .gitkeep
 ```
+
+There should be no public `v1.py`, `v2.py`, or `v3.py` scripts in the final repository.
 
 ---
 
@@ -41,71 +51,32 @@ pandas
 openpyxl
 ```
 
-If Python and these packages are already installed, no installation is needed.
+If they are already installed, no installation is needed.
 
----
-
-## Installing or checking required packages
-
-### Option 1: Double-click installer
-
-Double-click:
+To check or install them, double-click:
 
 ```text
 00_Install_Requirements.bat
 ```
 
-This checks whether the required packages are installed. If they are missing, it tries several installation methods automatically.
-
-### Option 2: Run helper from PowerShell
-
-Open PowerShell in the tool folder and run:
+or run:
 
 ```powershell
 python .\install_requirements_helper.py
 ```
 
-### Option 3: Manual installation commands
-
-If the helper does not work, try these commands manually in PowerShell.
-
-First try:
+Manual alternatives:
 
 ```powershell
 python -m pip install pandas openpyxl
-```
-
-If that fails because of permission restrictions, try:
-
-```powershell
 python -m pip install --user pandas openpyxl
-```
-
-If the `py` launcher is available, try:
-
-```powershell
 py -m pip install pandas openpyxl
-```
-
-or:
-
-```powershell
 py -m pip install --user pandas openpyxl
-```
-
-If using Anaconda or Miniconda, try:
-
-```powershell
 conda install pandas openpyxl
-```
-
-or:
-
-```powershell
 conda install -c conda-forge pandas openpyxl
 ```
 
-To verify installation:
+Verify installation:
 
 ```powershell
 python -c "import pandas, openpyxl; print('Packages installed successfully')"
@@ -115,7 +86,7 @@ python -c "import pandas, openpyxl; print('Packages installed successfully')"
 
 ## Correct input folder
 
-When the BAT file asks for the data folder, paste the path ending with:
+For a single run, use the folder ending with:
 
 ```text
 DATA_REPORT\data
@@ -133,37 +104,27 @@ Do **not** use:
 C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data\map_layers
 ```
 
-The script reads the parent `data` folder and finds the required economics overview file from there.
+For multiple runs, use the folder that contains all `Run_*` folders.
 
-The required source file is usually:
+Example:
 
 ```text
-DATA_REPORT\data\Economics_overview_sum.js
+S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES3 30 April\Report_Data
+```
+
+This folder should contain:
+
+```text
+Run_G0001\DATA_REPORT\data
+Run_G0002\DATA_REPORT\data
+Run_G0013\DATA_REPORT\data
 ```
 
 ---
 
-## Running from BAT files
+## Output structure
 
-### Run all states
-
-1. Open the tool folder.
-2. Double-click:
-
-```text
-01_Run_All_States.bat
-```
-
-3. Paste the `DATA_REPORT\data` folder path when asked.
-4. Enter an output prefix, for example:
-
-```text
-Run_G0001
-```
-
-5. Open the `outputs` folder.
-
-Expected output structure:
+### Single-run mode
 
 ```text
 outputs
@@ -174,38 +135,105 @@ outputs
 ├── Victoria
 │   └── Run_G0001_Victoria_Economics_Dashboard_Final_Table.xlsx
 │
-├── New_South_Wales
-│   └── Run_G0001_New_South_Wales_Economics_Dashboard_Final_Table.xlsx
+└── ...
+```
+
+### Batch-run mode
+
+```text
+outputs
+│
+├── Queensland
+│   ├── Run_G0001_Queensland_Economics_Dashboard_Final_Table.xlsx
+│   ├── Run_G0002_Queensland_Economics_Dashboard_Final_Table.xlsx
+│   └── Run_G0013_Queensland_Economics_Dashboard_Final_Table.xlsx
+│
+├── Victoria
+│   ├── Run_G0001_Victoria_Economics_Dashboard_Final_Table.xlsx
+│   ├── Run_G0002_Victoria_Economics_Dashboard_Final_Table.xlsx
+│   └── Run_G0013_Victoria_Economics_Dashboard_Final_Table.xlsx
 │
 └── ...
 ```
 
-### Run Queensland only
+---
 
-1. Open the tool folder.
-2. Double-click:
+## Workbook structure
+
+Each state workbook contains:
+
+1. One sheet per region.
+2. A final state-total sheet with the same name as the state.
+
+Example:
+
+```text
+Run_G0001_Queensland_Economics_Dashboard_Final_Table.xlsx
+
+Sheets:
+1. Burdekin
+2. Burnett Mary
+3. Cape York
+4. Fitzroy
+...
+last sheet: Queensland
+```
+
+The final state sheet is the row-wise sum of all regional sheets in that workbook.
+
+```text
+Queensland row for 2020 =
+    Burdekin row for 2020
+  + Burnett Mary row for 2020
+  + Cape York row for 2020
+  + Fitzroy row for 2020
+  + ...
+```
+
+The same logic is applied for every year and every economics column.
+
+---
+
+## Running from BAT files
+
+### Check/install packages
+
+Double-click:
+
+```text
+00_Install_Requirements.bat
+```
+
+### Run one data folder for all states
+
+Double-click:
+
+```text
+01_Run_All_States.bat
+```
+
+### Run one data folder for Queensland only
+
+Double-click:
 
 ```text
 02_Run_Queensland_Only.bat
 ```
 
-3. Paste the `DATA_REPORT\data` folder path when asked.
-4. Enter an output prefix, for example:
+### Run all Run_* folders for all states
+
+Double-click:
 
 ```text
-Run_G0001
+03_Run_All_Runs_All_States.bat
 ```
 
-5. Open:
+### Run all Run_* folders for Queensland only
+
+Double-click:
 
 ```text
-outputs\Queensland
-```
-
-Expected output:
-
-```text
-outputs\Queensland\Run_G0001_Queensland_Economics_Dashboard_Final_Table.xlsx
+04_Run_All_Runs_Queensland_Only.bat
 ```
 
 ---
@@ -218,75 +246,47 @@ Open PowerShell and go to the tool folder:
 cd C:\LUTO_Extractor
 ```
 
-Check that the script exists:
+### Single run: all states
 
 ```powershell
-dir
+python ".\luto_economics_dashboard_state_exporter.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --start-year 2020 --end-year 2050
 ```
 
-You should see:
-
-```text
-luto_economics_dashboard_state_exporter_v1.py
-```
-
-### Run all states
+### Single run: Queensland only
 
 ```powershell
-python ".\luto_economics_dashboard_state_exporter_v1.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --output-prefix Run_G0001 --start-year 2020 --end-year 2050
+python ".\luto_economics_dashboard_state_exporter.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --states Queensland --start-year 2020 --end-year 2050
 ```
 
-### Run Queensland only
+### Single run: selected regions
 
 ```powershell
-python ".\luto_economics_dashboard_state_exporter_v1.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --output-prefix Run_G0001 --states Queensland --start-year 2020 --end-year 2050
+python ".\luto_economics_dashboard_state_exporter.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --regions Fitzroy "Burnett Mary" "South East Queensland" --start-year 2020 --end-year 2050
 ```
 
-### Run selected regions only
-
-Example for Fitzroy:
+### Batch mode: all runs, all states
 
 ```powershell
-python ".\luto_economics_dashboard_state_exporter_v1.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --output-prefix Run_G0001 --regions Fitzroy --start-year 2020 --end-year 2050
+python ".\luto_economics_dashboard_state_exporter.py" --reports-base-dir "S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES3 30 April\Report_Data" --output-dir "C:\LUTO_Extractor\outputs" --start-year 2020 --end-year 2050
 ```
 
-Example for multiple regions:
+### Batch mode: all runs, Queensland only
 
 ```powershell
-python ".\luto_economics_dashboard_state_exporter_v1.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --output-prefix Run_G0001 --regions Fitzroy "Burnett Mary" "South East Queensland" --start-year 2020 --end-year 2050
+python ".\luto_economics_dashboard_state_exporter.py" --reports-base-dir "S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES3 30 April\Report_Data" --output-dir "C:\LUTO_Extractor\outputs" --states Queensland --start-year 2020 --end-year 2050
 ```
 
-Use quotation marks around region names that contain spaces.
-
-### Run another scenario
-
-Only change the input folder and output prefix.
-
-Example for `Run_G0013`:
+### Batch mode: selected runs only
 
 ```powershell
-python ".\luto_economics_dashboard_state_exporter_v1.py" --data-dir "C:\Users\hosse\Downloads\Run_G0013\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --output-prefix Run_G0013 --start-year 2020 --end-year 2050
+python ".\luto_economics_dashboard_state_exporter.py" --reports-base-dir "S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES3 30 April\Report_Data" --output-dir "C:\LUTO_Extractor\outputs" --run-names Run_G0001 Run_G0013 --start-year 2020 --end-year 2050
 ```
 
 ---
 
-## What the Excel files contain
+## Excel table structure
 
-Each workbook contains dashboard-style economics tables.
-
-Each sheet represents one region.
-
-For example, the Queensland workbook may include sheets such as:
-
-- Fitzroy
-- Burdekin
-- Burnett Mary
-- South East Queensland
-- Wet Tropics
-- Cape York
-- Mackay Whitsunday
-
-Each regional sheet follows this structure:
+Each regional and state-total sheet follows this structure:
 
 ```text
 Row 1: Chart title
@@ -312,39 +312,29 @@ The exported values correspond to dashboard economics series such as:
 
 ### Script not found
 
-If PowerShell says it cannot find:
+Make sure this file exists in the tool folder:
 
 ```text
-luto_economics_dashboard_state_exporter_v1.py
+luto_economics_dashboard_state_exporter.py
 ```
 
-make sure you are in the correct folder:
+### Wrong data folder
 
-```powershell
-cd C:\LUTO_Extractor
-```
-
-Then run:
-
-```powershell
-dir
-```
-
-The script must be listed there.
-
-### Data folder does not exist
-
-Check that the pasted path exists and ends with:
+Use:
 
 ```text
 DATA_REPORT\data
 ```
 
-Do **not** use the `map_layers` folder.
+Do **not** use:
+
+```text
+DATA_REPORT\data\map_layers
+```
 
 ### No output created
 
-Check that this file exists inside the selected data folder:
+Check that the selected data folder contains:
 
 ```text
 Economics_overview_sum.js
@@ -356,17 +346,9 @@ Expected location:
 DATA_REPORT\data\Economics_overview_sum.js
 ```
 
-If this file is missing, the selected folder is not the correct LUTO dashboard data folder.
-
 ### Missing Python package
 
-If you see an error such as:
-
-```text
-ModuleNotFoundError: No module named 'pandas'
-```
-
-run:
+Run:
 
 ```powershell
 python .\install_requirements_helper.py
@@ -378,7 +360,7 @@ or:
 python -m pip install pandas openpyxl
 ```
 
-If permission is blocked, try:
+If permission is blocked:
 
 ```powershell
 python -m pip install --user pandas openpyxl
@@ -386,7 +368,7 @@ python -m pip install --user pandas openpyxl
 
 ---
 
-## Notes for GitHub users
+## GitHub notes
 
 Do not commit generated Excel outputs.
 
@@ -396,7 +378,7 @@ The repository should include only the tool files and an empty `outputs` folder 
 outputs\.gitkeep
 ```
 
-The `.gitignore` file should exclude generated outputs such as:
+The `.gitignore` file should exclude generated outputs:
 
 ```text
 *.xlsx
@@ -404,27 +386,4 @@ The `.gitignore` file should exclude generated outputs such as:
 *.csv
 outputs/*
 !outputs/.gitkeep
-```
-
----
-
-## Recommended sharing package
-
-Share the repository or zip folder as:
-
-```text
-LUTO_Economics_Dashboard_State_Exporter_v1.zip
-```
-
-The folder should contain:
-
-```text
-install_requirements_helper.py
-00_Install_Requirements.bat
-luto_economics_dashboard_state_exporter_v1.py
-README.md
-README_User_Guide.txt
-01_Run_All_States.bat
-02_Run_Queensland_Only.bat
-outputs
 ```

@@ -1,79 +1,21 @@
-LUTO Economics Dashboard State Exporter v1
-================================================
+LUTO Economics Dashboard State Exporter
+======================================
 
 Purpose
 -------
 This tool extracts the LUTO dashboard economics overview data and exports final dashboard-style Excel workbooks.
 
-Output structure:
-- Each state is saved as a separate folder.
-- Each state folder contains one Excel workbook.
-- Each region is saved as a separate sheet inside that state workbook.
-- Only final Excel output files are saved. Diagnostic/intermediate files are not saved.
+The production script is:
 
-Required files
---------------
-Place these files in the same folder:
+luto_economics_dashboard_state_exporter.py
 
-1. luto_economics_dashboard_state_exporter_v1.py
-2. 01_Run_All_States.bat
-3. 02_Run_Queensland_Only.bat
-4. README_User_Guide.txt
+There should be no public v1.py, v2.py, or v3.py scripts in the final shared folder.
 
-Recommended folder structure:
+Output structure
+----------------
+The tool saves outputs by state.
 
-LUTO_Economics_Dashboard_State_Exporter_v1
-│
-├── luto_economics_dashboard_state_exporter_v1.py
-├── README_User_Guide.txt
-├── 01_Run_All_States.bat
-├── 02_Run_Queensland_Only.bat
-└── outputs
-
-Python requirements
--------------------
-This tool requires Python and the following packages:
-
-- pandas
-- openpyxl
-
-If these packages are already installed, no installation is needed.
-
-If they are missing, open PowerShell in the tool folder and run:
-
-python -m pip install pandas openpyxl
-
-Correct data folder
--------------------
-When the BAT file asks for the data folder, paste the path ending with:
-
-DATA_REPORT\data
-
-Example:
-
-C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data
-
-Do NOT use:
-
-C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data\map_layers
-
-The script reads the parent data folder and finds the required economics overview file from there.
-
-How to run all states
----------------------
-1. Open the tool folder.
-2. Double-click:
-
-01_Run_All_States.bat
-
-3. Paste the DATA_REPORT\data folder path when asked.
-4. Enter an output prefix, for example:
-
-Run_G0001
-
-5. Open the outputs folder.
-
-Expected output example:
+For one run:
 
 outputs
 │
@@ -83,52 +25,153 @@ outputs
 ├── Victoria
 │   └── Run_G0001_Victoria_Economics_Dashboard_Final_Table.xlsx
 │
-├── New_South_Wales
-│   └── Run_G0001_New_South_Wales_Economics_Dashboard_Final_Table.xlsx
+└── ...
+
+For multiple runs:
+
+outputs
+│
+├── Queensland
+│   ├── Run_G0001_Queensland_Economics_Dashboard_Final_Table.xlsx
+│   ├── Run_G0002_Queensland_Economics_Dashboard_Final_Table.xlsx
+│   └── Run_G0013_Queensland_Economics_Dashboard_Final_Table.xlsx
+│
+├── Victoria
+│   ├── Run_G0001_Victoria_Economics_Dashboard_Final_Table.xlsx
+│   ├── Run_G0002_Victoria_Economics_Dashboard_Final_Table.xlsx
+│   └── Run_G0013_Victoria_Economics_Dashboard_Final_Table.xlsx
 │
 └── ...
 
-How to run Queensland only
---------------------------
-1. Open the tool folder.
-2. Double-click:
+Workbook structure
+------------------
+Each state workbook contains:
 
-02_Run_Queensland_Only.bat
+1. One sheet per region.
+2. A final state-total sheet with the same name as the state.
 
-3. Paste the DATA_REPORT\data folder path when asked.
-4. Enter an output prefix, for example:
+Example for Queensland:
 
-Run_G0001
+Run_G0001_Queensland_Economics_Dashboard_Final_Table.xlsx
 
-5. Open:
+Sheets:
+- Burdekin
+- Burnett Mary
+- Cape York
+- Fitzroy
+- ...
+- Queensland
 
-outputs\Queensland
+The final Queensland sheet is the sum of all regional sheets in that workbook.
 
-Expected output example:
+Required files
+--------------
+Place these files in the same folder:
 
-outputs\Queensland\Run_G0001_Queensland_Economics_Dashboard_Final_Table.xlsx
+1. install_requirements_helper.py
+2. 00_Install_Requirements.bat
+3. luto_economics_dashboard_state_exporter.py
+4. 01_Run_All_States.bat
+5. 02_Run_Queensland_Only.bat
+6. 03_Run_All_Runs_All_States.bat
+7. 04_Run_All_Runs_Queensland_Only.bat
+8. README.md
+9. README_User_Guide.txt
+10. outputs folder
+
+Python requirements
+-------------------
+This tool requires Python and the following packages:
+
+- pandas
+- openpyxl
+
+Install/check packages
+----------------------
+Double-click:
+
+00_Install_Requirements.bat
+
+Or run from PowerShell:
+
+python .\install_requirements_helper.py
+
+Manual package install commands:
+
+python -m pip install pandas openpyxl
+python -m pip install --user pandas openpyxl
+conda install pandas openpyxl
+conda install -c conda-forge pandas openpyxl
+
+Correct input folder
+--------------------
+For a single run, use the folder ending with:
+
+DATA_REPORT\data
+
+Do NOT use:
+
+DATA_REPORT\data\map_layers
+
+For multiple runs, use the folder that contains all Run_* folders.
+
+Example:
+
+S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES3 30 April\Report_Data
+
+Run using BAT files
+-------------------
+1. 00_Install_Requirements.bat
+2. 01_Run_All_States.bat
+3. 02_Run_Queensland_Only.bat
+4. 03_Run_All_Runs_All_States.bat
+5. 04_Run_All_Runs_Queensland_Only.bat
+
+Run directly from PowerShell
+----------------------------
+Open PowerShell and go to the tool folder:
+
+cd C:\LUTO_Extractor
+
+Single run, all states:
+
+python ".\luto_economics_dashboard_state_exporter.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --start-year 2020 --end-year 2050
+
+Single run, Queensland only:
+
+python ".\luto_economics_dashboard_state_exporter.py" --data-dir "C:\Users\hosse\Downloads\Run_G0001\DATA_REPORT\data" --output-dir "C:\LUTO_Extractor\outputs" --states Queensland --start-year 2020 --end-year 2050
+
+All runs, all states:
+
+python ".\luto_economics_dashboard_state_exporter.py" --reports-base-dir "S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES3 30 April\Report_Data" --output-dir "C:\LUTO_Extractor\outputs" --start-year 2020 --end-year 2050
+
+All runs, Queensland only:
+
+python ".\luto_economics_dashboard_state_exporter.py" --reports-base-dir "S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES3 30 April\Report_Data" --output-dir "C:\LUTO_Extractor\outputs" --states Queensland --start-year 2020 --end-year 2050
+
+Selected runs only:
+
+python ".\luto_economics_dashboard_state_exporter.py" --reports-base-dir "S:\VC-DVCResearch\CWA\Projects\Current\Net Zero Industrial Precincts\5 Energy Land Use 25-26\LUTO2 runs\RES3 30 April\Report_Data" --output-dir "C:\LUTO_Extractor\outputs" --run-names Run_G0001 Run_G0013 --start-year 2020 --end-year 2050
 
 What the Excel file contains
 ----------------------------
-Each workbook contains dashboard-style tables.
-
-Each sheet represents one region.
-
-For example, in the Queensland workbook, sheets may include:
-
-- Fitzroy
-- Burdekin
-- Burnett Mary
-- South East Queensland
-- Wet Tropics
-- Cape York
-- Mackay Whitsunday
-
-Each regional sheet follows the dashboard export structure:
+Each regional and state-total sheet follows this structure:
 
 Row 1: Chart title
 Row 2: Category and economics series names
 Rows below: Yearly values from 2020 to 2050
+
+The exported values correspond to dashboard economics series such as:
+
+- Agricultural Land-use (revenue)
+- Agricultural Management (revenue)
+- Non-Agricultural Land-use (revenue)
+- Agricultural Land-use (cost)
+- Agricultural Management (cost)
+- Non-Agricultural Land-use (cost)
+- Transition cost (Ag2Ag)
+- Transition cost (Ag2Non-Ag)
+- Profit
 
 Common errors
 -------------
@@ -136,13 +179,17 @@ Common errors
 
 Make sure this file is in the same folder as the BAT files:
 
-luto_economics_dashboard_state_exporter_v1.py
+luto_economics_dashboard_state_exporter.py
 
-2. Data folder does not exist
+2. Wrong data folder
 
-Make sure the pasted path is correct and ends with:
+Use:
 
 DATA_REPORT\data
+
+Do not use:
+
+DATA_REPORT\data\map_layers
 
 3. No output created
 
@@ -150,26 +197,16 @@ Check that the selected data folder contains:
 
 Economics_overview_sum.js
 
-This is usually located directly inside:
-
-DATA_REPORT\data
-
 4. Python package error
 
 Run:
 
+python .\install_requirements_helper.py
+
+or:
+
 python -m pip install pandas openpyxl
 
-Recommended sharing package
----------------------------
-Share the folder as:
+If permission is blocked:
 
-LUTO_Economics_Dashboard_State_Exporter_v1.zip
-
-The folder should contain:
-
-- luto_economics_dashboard_state_exporter_v1.py
-- README_User_Guide.txt
-- 01_Run_All_States.bat
-- 02_Run_Queensland_Only.bat
-- outputs
+python -m pip install --user pandas openpyxl
