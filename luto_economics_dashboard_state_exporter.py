@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-luto_economics_dashboard_state_exporter_v2.py
+luto_economics_dashboard_state_exporter_v3.py
 
 Purpose
 -------
@@ -32,7 +32,7 @@ Batch output:
         Run_G0001_Victoria_Economics_Dashboard_Final_Table.xlsx
         ...
 
-Each workbook contains one sheet per region in that state.
+Each workbook contains one sheet per region in that state, plus a final state-total sheet.
 
 Requirements
 ------------
@@ -386,6 +386,64 @@ def make_region_chart_table(region_rows: pd.DataFrame, start_year: Optional[int]
     return table
 
 
+def make_state_total_chart_table(region_tables: List[Tuple[str, pd.DataFrame]]) -> pd.DataFrame:
+    """
+    Create a state-total dashboard table by summing all regional tables row-by-row.
+
+    Logic:
+    - Each regional sheet has a Category column, where Category is the year.
+    - For each year, numeric values from all region sheets are summed column-by-column.
+    - Missing values are treated as zero.
+    - The output keeps the same dashboard-export table structure:
+        Category | Agricultural Land-use (revenue) | ... | Profit
+
+    This is equivalent to:
+        state_row_2020 = sum(region_row_2020 for all region sheets)
+        state_row_2022 = sum(region_row_2022 for all region sheets)
+        ...
+    """
+    if not region_tables:
+        return pd.DataFrame(columns=["Category"] + DASHBOARD_SERIES_ORDER)
+
+    all_tables = []
+
+    for _region, df in region_tables:
+        if df is None or df.empty or "Category" not in df.columns:
+            continue
+
+        local = df.copy()
+        local["Category"] = pd.to_numeric(local["Category"], errors="coerce")
+        local = local.dropna(subset=["Category"])
+
+        value_cols = [c for c in local.columns if c != "Category"]
+        for col in value_cols:
+            local[col] = pd.to_numeric(local[col], errors="coerce").fillna(0.0)
+
+        all_tables.append(local)
+
+    if not all_tables:
+        return pd.DataFrame(columns=["Category"] + DASHBOARD_SERIES_ORDER)
+
+    combined = pd.concat(all_tables, ignore_index=True, sort=False).fillna(0.0)
+
+    value_cols = [c for c in combined.columns if c != "Category"]
+    summed = combined.groupby("Category", as_index=False)[value_cols].sum()
+
+    # Keep standard dashboard order first, then any extra observed columns.
+    observed = [c for c in summed.columns if c != "Category"]
+    ordered = [s for s in DASHBOARD_SERIES_ORDER if s in observed] + [s for s in observed if s not in DASHBOARD_SERIES_ORDER]
+    summed = summed[["Category"] + ordered].sort_values("Category")
+
+    try:
+        summed["Category"] = summed["Category"].astype(int)
+    except Exception:
+        pass
+
+    summed = summed.astype(object).where(pd.notna(summed), "")
+    return summed
+
+
+
 def write_chart_table_sheet(ws, chart_df: pd.DataFrame, chart_title: str) -> None:
     headers = list(chart_df.columns)
     ncols = max(len(headers), 1)
@@ -564,7 +622,10 @@ def process_one_run(
 
         wb = Workbook()
         wb.remove(wb.active)
-        used_sheet_names: set[str] = set()
+
+        # Reserve the state sheet name so the final state-total sheet can use the exact state name.
+        # This matters for ACT/NT-style cases where a region name may equal the state name.
+        used_sheet_names: set[str] = {sanitize_sheet_name(state).lower()}
 
         for region, chart_df in region_tables:
             sheet_name = unique_sheet_name(region, used_sheet_names)
@@ -572,8 +633,15 @@ def process_one_run(
             title = chart_title_template.format(region=region, state=state, run=run_name)
             write_chart_table_sheet(ws, chart_df, chart_title=title)
 
+        # Add final state-total sheet as the last sheet.
+        state_total_df = make_state_total_chart_table(region_tables)
+        state_sheet_name = sanitize_sheet_name(state)
+        ws_total = wb.create_sheet(state_sheet_name)
+        state_title = f"Economics overview for {state} - total of all regions"
+        write_chart_table_sheet(ws_total, state_total_df, chart_title=state_title)
+
         wb.save(workbook_path)
-        log(f"Saved: {workbook_path} ({len(region_tables)} region sheet(s))")
+        log(f"Saved: {workbook_path} ({len(region_tables)} region sheet(s) + 1 state-total sheet)")
 
     if unknown_regions:
         log(f"WARNING: [{run_name}] These regions were not in the built-in state mapping and were written to Unknown_State:")

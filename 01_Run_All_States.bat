@@ -8,14 +8,14 @@ echo ==========================================
 echo.
 
 set TOOL_DIR=%~dp0
-set SCRIPT=%TOOL_DIR%luto_economics_dashboard_state_exporter_v1.py
+set SCRIPT=%TOOL_DIR%luto_economics_dashboard_state_exporter.py
 set OUTPUT_DIR=%TOOL_DIR%outputs
 
 if not exist "%SCRIPT%" (
     echo ERROR: Could not find the extractor script:
     echo %SCRIPT%
     echo.
-    echo Make sure luto_economics_dashboard_state_exporter_v1.py is in the same folder as this BAT file.
+    echo Make sure luto_economics_dashboard_state_exporter.py is in the same folder as this BAT file.
     echo.
     pause
     exit /b 1
@@ -87,3 +87,4 @@ echo %OUTPUT_DIR%
 echo ==========================================
 echo.
 pause
+

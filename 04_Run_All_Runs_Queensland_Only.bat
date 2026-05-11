@@ -8,7 +8,7 @@ echo ==========================================
 echo.
 
 set TOOL_DIR=%~dp0
-set SCRIPT=%TOOL_DIR%luto_economics_dashboard_state_exporter_v2.py
+set SCRIPT=%TOOL_DIR%luto_economics_dashboard_state_exporter.py
 set OUTPUT_DIR=%TOOL_DIR%outputs
 
 if not exist "%SCRIPT%" (
@@ -59,3 +59,4 @@ echo Queensland outputs are here:
 echo %OUTPUT_DIR%\Queensland
 echo.
 pause
+
